@@ -3,7 +3,7 @@
 library(shiny)
 library(xlsx)
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
   
   rawData <- reactive({
     filet <- input$file1
@@ -12,18 +12,26 @@ shinyServer(function(input, output) {
   })
   
   a <- reactive({
-    a <- subset(rawData(), AssertionString == "10046")
+    a <- subset(rawData(), AssertionString == input$table1Filter)
     a
   })
   
   b <- reactive({
-    b <- subset(rawData(), AssertionString == "10074")
+    b <- subset(rawData(), AssertionString == input$table2Filter)
     b
   })
   
   c <- reactive({
-    c <- subset(rawData(), AssertionString == "10179")
+    c <- subset(rawData(), AssertionString == input$table3Filter)
     c
+  })
+  
+  observe({
+    dfNames <- names(rawData())
+    headerNames <- list()
+    headerNames[dfNames] <- dfNames
+    
+    updateSelectInput(session, "headerNames", choices = headerNames, selected="" )
   })
 
   output$contents <- renderTable({
@@ -43,7 +51,7 @@ shinyServer(function(input, output) {
   })
   
   output$downloadData <- downloadHandler(
-    filename = function() { paste("file_name", '.xlsx', sep='') },
+    filename = function() { paste(input$fileName, '.xlsx', sep='') },
     content = function(file) {
       write.xlsx2(rawData(), file, sheetName = "sheet1")
       write.xlsx2(a(), file, sheetName = "sheet2", append = T)
